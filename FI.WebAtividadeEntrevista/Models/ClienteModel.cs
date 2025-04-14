@@ -67,5 +67,16 @@ namespace WebAtividadeEntrevista.Models
         /// </summary>
         public string Telefone { get; set; }
 
+        /// <summary>
+        /// CPF
+        /// </summary>
+        [Required]
+        public string CPF { get; set; }
+
+        /// <summary>
+        /// Lista de Beneficiarios
+        /// </summary>
+        public ICollection<BeneficiarioModel> Beneficiarios { get; set; }
+
     }    
 }

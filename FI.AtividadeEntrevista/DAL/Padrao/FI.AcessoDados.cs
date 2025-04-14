@@ -40,6 +40,26 @@ namespace FI.AtividadeEntrevista.DAL
             }
         }
 
+        internal void ExecutarSQL(string sqlComando)
+        {
+            SqlCommand comando = new SqlCommand();
+            SqlConnection conexao = new SqlConnection(stringDeConexao);
+            comando.Connection = conexao;
+            comando.CommandType = CommandType.Text;
+            comando.CommandText = sqlComando;
+
+            conexao.Open();
+            try
+            {
+                comando.ExecuteNonQuery();
+            }
+            finally
+            {
+                conexao.Close();
+            }
+        }
+
+
         internal DataSet Consultar(string NomeProcedure, List<SqlParameter> parametros)
         {
             SqlCommand comando = new SqlCommand();

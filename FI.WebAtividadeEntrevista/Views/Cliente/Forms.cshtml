@@ -1,18 +1,23 @@
-﻿
-<form id="formCadastro" method="post">
+﻿<form id="formCadastro" method="post">
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-6">
             <div class="form-group">
                 <label for="Nome">Nome:</label>
                 <input required="required" type="text" class="form-control" id="Nome" name="Nome" placeholder="Ex.: João" maxlength="50">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="Sobrenome">Sobrenome:</label>
+                <input required="required" type="text" class="form-control" id="Sobrenome" name="Sobrenome" placeholder="Ex.: da Silva" maxlength="255">
             </div>
         </div>
     </div>
     <div class="row">
         <div class="col-md-6">
             <div class="form-group">
-                <label for="Sobrenome">Sobrenome:</label>
-                <input required="required" type="text" class="form-control" id="Sobrenome" name="Sobrenome" placeholder="Ex.: da Silva" maxlength="255">
+                <label for="CPF">CPF:</label>
+                <input required="required" type="text" class="form-control" id="CPF" name="CPF" placeholder="Ex.: 010.011.111-00" maxlength="14" oninput="mascaraCPF(this)">
             </div>
         </div>
         <div class="col-md-6">
@@ -21,7 +26,6 @@
                 <input required="required" type="text" class="form-control" id="Nacionalidade" name="Nacionalidade" placeholder="Ex.: brasileira" maxlength="50">
             </div>
         </div>
-
     </div>
     <div class="row">
         <div class="col-md-4">
@@ -80,6 +84,68 @@
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-lg-12">
+            <div>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalBeneficiarios">Beneficiários</button>
+            </div>
+        </div>
+    </div>
 
 
+    <!-- Modal -->
+    <div class="modal fade" id="modalBeneficiarios" tabindex="-1" role="dialog" aria-labelledby="modalBeneficiariosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Beneficiários</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modalBodyBeneficiarios">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="CPF">CPF:</label>
+                                <input type="text" class="form-control" id="CPFBeneficiario" name="CPFBeneficiario" placeholder="Ex.: 010.011.111-00" maxlength="14" oninput="mascaraCPF(this)">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="Nome">Nome:</label>
+                                <input type="text" class="form-control" id="NomeBeneficiario" name="NomeBeneficiario" placeholder="Ex.: João" maxlength="50">
+                            </div>
+                        </div>
+                        <div class="col-md-4 position-relative" style="height: 59px;">
+                            <button type="button" class="btn btn-sm btn-success"
+                                    style="position: absolute; bottom: 0;"
+                                    onclick="incluirBeneficiario()">
+                                Incluir
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <table class="table" id="tabelaBeneficiarios">
+                                <thead>
+                                    <tr>
+                                        <th>CPF</th>
+                                        <th>Nome</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Linhas de beneficiários -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
 </form>

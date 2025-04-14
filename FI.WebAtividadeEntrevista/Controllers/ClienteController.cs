@@ -6,6 +6,7 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using FI.AtividadeEntrevista.DML;
+using System.Text.RegularExpressions;
 
 namespace WebAtividadeEntrevista.Controllers
 {
@@ -26,7 +27,8 @@ namespace WebAtividadeEntrevista.Controllers
         public JsonResult Incluir(ClienteModel model)
         {
             BoCliente bo = new BoCliente();
-            
+            BoBeneficiario boBeneficiario = new BoBeneficiario();
+
             if (!this.ModelState.IsValid)
             {
                 List<string> erros = (from item in ModelState.Values
@@ -38,7 +40,12 @@ namespace WebAtividadeEntrevista.Controllers
             }
             else
             {
-                
+                if (bo.VerificarExistencia(model.CPF))
+                {
+                    Response.StatusCode = 400;
+                    return Json("Cadastro não alterado. O CPF já está em uso.");
+                }
+
                 model.Id = bo.Incluir(new Cliente()
                 {                    
                     CEP = model.CEP,
@@ -49,10 +56,25 @@ namespace WebAtividadeEntrevista.Controllers
                     Nacionalidade = model.Nacionalidade,
                     Nome = model.Nome,
                     Sobrenome = model.Sobrenome,
-                    Telefone = model.Telefone
+                    Telefone = model.Telefone,
+                    CPF = model.CPF
                 });
 
-           
+                List<Beneficiario> listaBeneficiarios = new List<Beneficiario>();
+                if (model.Beneficiarios != null)
+                {
+                    foreach (var item in model.Beneficiarios)
+                    {
+                        listaBeneficiarios.Add(new Beneficiario()
+                        {
+                            Nome = item.Nome,
+                            CPF = Regex.Replace(item.CPF, @"[^\d]", ""),
+                            ClienteId = model.Id
+                        });
+                    }
+                }
+                boBeneficiario.AtualizarLista(listaBeneficiarios, model.Id);
+
                 return Json("Cadastro efetuado com sucesso");
             }
         }
@@ -61,7 +83,8 @@ namespace WebAtividadeEntrevista.Controllers
         public JsonResult Alterar(ClienteModel model)
         {
             BoCliente bo = new BoCliente();
-       
+            BoBeneficiario boBeneficiario = new BoBeneficiario();
+
             if (!this.ModelState.IsValid)
             {
                 List<string> erros = (from item in ModelState.Values
@@ -73,6 +96,12 @@ namespace WebAtividadeEntrevista.Controllers
             }
             else
             {
+                if (bo.VerificarExistencia(model.CPF, model.Id))
+                {
+                    Response.StatusCode = 400;
+                    return Json("Cadastro não alterado. O CPF já está em uso.");
+                }
+
                 bo.Alterar(new Cliente()
                 {
                     Id = model.Id,
@@ -84,9 +113,25 @@ namespace WebAtividadeEntrevista.Controllers
                     Nacionalidade = model.Nacionalidade,
                     Nome = model.Nome,
                     Sobrenome = model.Sobrenome,
-                    Telefone = model.Telefone
+                    Telefone = model.Telefone,
+                    CPF = Regex.Replace(model.CPF, @"[^\d]", "")
                 });
-                               
+
+                List<Beneficiario> listaBeneficiarios = new List<Beneficiario>();
+                if (model.Beneficiarios != null)
+                {
+                    foreach (var item in model.Beneficiarios)
+                    {
+                        listaBeneficiarios.Add(new Beneficiario()
+                        {
+                            Nome = item.Nome,
+                            CPF = Regex.Replace(item.CPF, @"[^\d]", ""),
+                            ClienteId = model.Id
+                        });
+                    }
+                }
+                boBeneficiario.AtualizarLista(listaBeneficiarios, model.Id);
+
                 return Json("Cadastro alterado com sucesso");
             }
         }
@@ -95,7 +140,11 @@ namespace WebAtividadeEntrevista.Controllers
         public ActionResult Alterar(long id)
         {
             BoCliente bo = new BoCliente();
+            BoBeneficiario boBeneficiario = new BoBeneficiario();
+
             Cliente cliente = bo.Consultar(id);
+            List<Beneficiario> listaBeneficiarios = boBeneficiario.ListarPorCliente(id);
+            
             Models.ClienteModel model = null;
 
             if (cliente != null)
@@ -111,7 +160,16 @@ namespace WebAtividadeEntrevista.Controllers
                     Nacionalidade = cliente.Nacionalidade,
                     Nome = cliente.Nome,
                     Sobrenome = cliente.Sobrenome,
-                    Telefone = cliente.Telefone
+                    Telefone = cliente.Telefone,
+                    CPF = Regex.Replace(cliente.CPF, @"[^\d]", ""),
+                    Beneficiarios = (from item in listaBeneficiarios
+                                     select new BeneficiarioModel()
+                                     {
+                                         Id = item.Id,
+                                         Nome = item.Nome,
+                                         CPF = Regex.Replace(item.CPF, @"[^\d]", ""),
+                                         ClienteId = item.ClienteId
+                                     }).ToList()
                 };
 
             

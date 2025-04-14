@@ -1,5 +1,5 @@
-﻿
-$(document).ready(function () {
+﻿$(document).ready(function () {
+
     if (obj) {
         $('#formCadastro #Nome').val(obj.Nome);
         $('#formCadastro #CEP').val(obj.CEP);
@@ -10,11 +10,49 @@ $(document).ready(function () {
         $('#formCadastro #Cidade').val(obj.Cidade);
         $('#formCadastro #Logradouro').val(obj.Logradouro);
         $('#formCadastro #Telefone').val(obj.Telefone);
+        $('#formCadastro #CPF').val(formatarCPF(obj.CPF));
+
+        if (obj.Beneficiarios && obj.Beneficiarios.length > 0) {
+            var tabela = $('#tabelaBeneficiarios tbody');
+            obj.Beneficiarios.forEach(function (beneficiario) {
+                var novaLinha = $('<tr>');
+                novaLinha.append($('<td>').text(formatarCPF(beneficiario.CPF)));
+                novaLinha.append($('<td>').text(beneficiario.Nome));
+                var tdAcoes = $('<td>');
+                var btnAlterar = $('<button>').addClass('btn btn-sm btn-primary').css('margin-right', '5px').text('Alterar');
+                btnAlterar.on('click', function () {
+                    $('#CPFBeneficiario').val(beneficiario.CPF);
+                    $('#NomeBeneficiario').val(beneficiario.Nome);
+                    novaLinha.remove();
+                });
+                var btnExcluir = $('<button>').addClass('btn btn-sm btn-primary').text('Excluir');
+                btnExcluir.on('click', function () {
+                    if (confirm('Deseja excluir este beneficiário?')) {
+                        novaLinha.remove();
+                    }
+                });
+                tdAcoes.append(btnAlterar).append(btnExcluir);
+                novaLinha.append(tdAcoes);
+                tabela.append(novaLinha);
+            });
+        }
     }
 
     $('#formCadastro').submit(function (e) {
         e.preventDefault();
-        
+
+        if (!validarCPF($('#CPF').val())) {
+            ModalDialog("CPF Inválido", "O CPF informado é inválido.");
+            return;
+        }
+
+        var beneficiarios = [];
+        $('#tabelaBeneficiarios tbody tr').each(function () {
+            var cpf = $(this).find('td').eq(0).text().trim();
+            var nome = $(this).find('td').eq(1).text().trim();
+            beneficiarios.push({ CPF: cpf, Nome: nome });
+        });
+
         $.ajax({
             url: urlPost,
             method: "POST",
@@ -27,24 +65,26 @@ $(document).ready(function () {
                 "Estado": $(this).find("#Estado").val(),
                 "Cidade": $(this).find("#Cidade").val(),
                 "Logradouro": $(this).find("#Logradouro").val(),
-                "Telefone": $(this).find("#Telefone").val()
+                "Telefone": $(this).find("#Telefone").val(),
+                "CPF": $(this).find("#CPF").val().replace(/[.-]/g, ''),
+                "Beneficiarios": beneficiarios
             },
             error:
-            function (r) {
-                if (r.status == 400)
-                    ModalDialog("Ocorreu um erro", r.responseJSON);
-                else if (r.status == 500)
-                    ModalDialog("Ocorreu um erro", "Ocorreu um erro interno no servidor.");
-            },
+                function (r) {
+                    if (r.status == 400)
+                        ModalDialog("Ocorreu um erro", r.responseJSON);
+                    else if (r.status == 500)
+                        ModalDialog("Ocorreu um erro", "Ocorreu um erro interno no servidor.");
+                },
             success:
-            function (r) {
-                ModalDialog("Sucesso!", r)
-                $("#formCadastro")[0].reset();                                
-                window.location.href = urlRetorno;
-            }
+                function (r) {
+                    ModalDialog("Sucesso!", r)
+                    $("#formCadastro")[0].reset();
+                    window.location.href = urlRetorno;
+                }
         });
     })
-    
+
 })
 
 function ModalDialog(titulo, texto) {
@@ -69,4 +109,140 @@ function ModalDialog(titulo, texto) {
 
     $('body').append(texto);
     $('#' + random).modal('show');
+}
+
+function mascaraCPF(cpf) {
+    cpf.value = cpf.value.replace(/\D/g, '')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+}
+function validarCPF(cpf) {
+    cpf = cpf.replace(/[^\d]+/g, '');
+    if (cpf == '') return false;
+    if (cpf.length != 11 ||
+        cpf == "00000000000" ||
+        cpf == "11111111111" ||
+        cpf == "22222222222" ||
+        cpf == "33333333333" ||
+        cpf == "44444444444" ||
+        cpf == "55555555555" ||
+        cpf == "66666666666" ||
+        cpf == "77777777777" ||
+        cpf == "88888888888" ||
+        cpf == "99999999999")
+        return false;
+    add = 0;
+    for (i = 0; i < 9; i++)
+        add += parseInt(cpf.charAt(i)) * (10 - i);
+    rev = 11 - (add % 11);
+    if (rev == 10 || rev == 11)
+        rev = 0;
+    if (rev != parseInt(cpf.charAt(9)))
+        return false;
+    add = 0;
+    for (i = 0; i < 10; i++)
+        add += parseInt(cpf.charAt(i)) * (11 - i);
+    rev = 11 - (add % 11);
+    if (rev == 10 || rev == 11)
+        rev = 0;
+    if (rev != parseInt(cpf.charAt(10)))
+        return false;
+    return true;
+}
+
+function formatarCPF(cpf) {
+    cpf = cpf.replace(/\D/g, '');
+    if (cpf.length === 11) {
+        return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    }
+    return cpf;
+}
+
+function incluirBeneficiario() {
+
+    if (!validarCPF($('#CPFBeneficiario').val())) {
+        alert("CPF inválido.");
+        $('#CPFBeneficiario').focus();
+        return;
+    }
+
+    const cpfInput = document.getElementById("CPFBeneficiario");
+    const nomeInput = document.getElementById("NomeBeneficiario");
+    const cpf = cpfInput.value.trim();
+    const nome = nomeInput.value.trim();
+
+    const cpfClienteInput = document.getElementById("CPF");
+    const cpfCliente = cpfClienteInput ? cpfClienteInput.value.trim() : "";
+
+    if (cpf === "" || nome === "") {
+        alert("Preencha todos os campos!");
+        return;
+    }
+
+    if (cpfCliente && cpf === cpfCliente) {
+        alert("O CPF do beneficiário não pode ser igual ao CPF do cliente.");
+        return;
+    }
+
+    const tabela = document.querySelector("#tabelaBeneficiarios tbody");
+    let cpfJaExiste = false;
+
+    Array.from(tabela.rows).forEach(row => {
+        const cpfExistente = row.cells[0].textContent.trim();
+        if (cpfExistente === cpf) {
+            cpfJaExiste = true;
+        }
+    });
+
+    if (cpfJaExiste) {
+        alert("Este CPF já foi incluído como beneficiário.");
+        return;
+    }
+
+    const novaLinha = document.createElement("tr");
+
+    const tdCpf = document.createElement("td");
+    tdCpf.textContent = cpf;
+
+    const tdNome = document.createElement("td");
+    tdNome.textContent = nome;
+
+    const tdAcoes = document.createElement("td");
+
+    const btnAlterar = document.createElement("button");
+    btnAlterar.className = "btn btn-sm btn-primary";
+    btnAlterar.style.marginRight = "5px";
+    btnAlterar.textContent = "Alterar";
+    btnAlterar.onclick = function () {
+        cpfInput.value = cpf;
+        nomeInput.value = nome;
+        tabela.removeChild(novaLinha);
+    };
+
+    const btnExcluir = document.createElement("button");
+    btnExcluir.className = "btn btn-sm btn-primary";
+    btnExcluir.textContent = "Excluir";
+    btnExcluir.onclick = function () {
+        if (confirm("Deseja excluir este beneficiário?")) {
+            tabela.removeChild(novaLinha);
+        }
+    };
+
+    tdAcoes.appendChild(btnAlterar);
+    tdAcoes.appendChild(btnExcluir);
+
+    novaLinha.appendChild(tdCpf);
+    novaLinha.appendChild(tdNome);
+    novaLinha.appendChild(tdAcoes);
+
+    tabela.appendChild(novaLinha);
+
+    // Limpar campos
+    cpfInput.value = "";
+    cpfInput.focus();
+    nomeInput.value = "";
+
+
+
 }
